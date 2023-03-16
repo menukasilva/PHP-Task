@@ -4,6 +4,19 @@
 //Define command line arguments
 $options = getopt('', array('file:', 'rebuild_table::'));
 
+// Show help message
+if (isset($options['help'])) {
+    echo "Usage: script.php --file <filename> [--rebuild_table] [--dry_run] [-u <username>] [-p <password>] [-h <host>]\n";
+    echo "Options:\n";
+    echo "  --file             Path to CSV file (required)\n";
+    echo "  --rebuild_table    If set, the 'users' table will be dropped and re-created\n";
+    echo "  --dry_run          If set, the script will not insert any data into the database\n";
+    echo "  -u <username>      MySQL username\n";
+    echo "  -p <password>      MySQL password\n";
+    echo "  -h <host>          MySQL host\n";
+    exit();
+}
+
 //Check options
 if (!isset($options['file'])){
     exit("Error: Missing required --file \n");
@@ -17,11 +30,16 @@ if (!file_exists($filename)){
     exit("Error:File does not exist\n");
 }
 
-//Connect to database
-$servername = $options['localhost'];
-$username = $options['root'];
-$password = $options['root'];
-$database = $options['testing'];
+//Check if file is readable
+if (!is_readable($filename)) {
+    exit("Error: File '$filename' is not readable.\n");
+}
+
+// Get MySQL connection parameters
+$servername = isset($options['h']) ? $options['h'] : 'localhost'; 
+$username = isset($options['u']) ? $options['u'] : 'root';  
+$password = isset($options['p']) ? $options['p'] : 'root';  
+$database = 'testing';
 
 //Open database connection with mysqli
 $mysqli = new mysqli($servername, $username, $password, $database);
