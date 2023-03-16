@@ -18,10 +18,10 @@ if (!file_exists($filename)){
 }
 
 //Connect to database
-$servername = $options['servername'];
-$username = $options['username'];
-$password = $options['password'];
-$database = $options['database'];
+$servername = $options['localhost'];
+$username = $options['root'];
+$password = $options['root'];
+$database = $options['testing'];
 
 try{
     $conn = new PDO("mysql:host=$servername; dbname=$database",  $username, $password);
