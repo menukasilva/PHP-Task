@@ -45,8 +45,8 @@ $database = 'testing';
 $mysqli = new mysqli($servername, $username, $password, $database);
 
 //Check for errors connecting to MySQL server
-if ($mysqli->connect_error()) {
-    exit("Error connecting to MySQL server" .$mysqli->connect_error() . "\n");
+if ($mysqli->connect_errno) {
+    exit("Error connecting to MySQL server" .$mysqli->connect_error . "\n");
 }
 
 //Rebuild table if requested
