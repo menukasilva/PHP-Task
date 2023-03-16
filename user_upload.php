@@ -23,54 +23,68 @@ $username = $options['root'];
 $password = $options['root'];
 $database = $options['testing'];
 
-try{
-    $conn = new PDO("mysql:host=$servername; dbname=$database",  $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ATTR_ERRMODE_EXCEPTION);
-    echo "Connected to database";
-}catch(PDOException $e){
-    echo "Error connecting to database.";
-    exit();
+//Open database connection with mysqli
+$mysqli = new mysqli($servername, $username, $password, $database);
+
+//Check for errors connecting to MySQL server
+if ($mysqli->connect_error()) {
+    exit("Error connecting to MySQL server" .$mysqli->connect_error() . "\n");
 }
 
-//Create users table if not already exists
-try{
-    $conn->execute("CREATE TABLE IF NOT EXISTS 'users'(
-        'id' INT NOT NULL PRIMARY KEY AUTOINCREMENT,
-        'name' VARCHAR(255) NOT NULL,
-        'surname' VARCHAR(255) NOT NULL,
-        'email' VARCHAR(255) NOT NULL,)
-        ENGINE = InnoDB;");
-}catch(PDOException $e){
-    echo "Error Could not create users table." .$e->getMessage() . "\n";
-    exit(1);
+//Rebuild table if requested
+if (isset($options['rebuild_table']) && $options['rebuild_table'] == 'true'){
+    //Drop the users table
+    $sql = "DROP TABLE IF EXISTS users";
+    if (!$mysqli->query($sql)) {
+        exit("Error dropping table: " . $mysqli->error . "\n");
 }
 
-//Prepare insert statement
-$insert = $conn->prepare("INSERT INTO users,('name', 'password', 'email') VALUES (?, ?, ?)");
+//Create the users table
+$sql = "CREATE TABLE users (
+        id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        surname VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE
+        )";
+    if (!$mysqli->query($sql)) {
+    exit("Error creating table: " . $mysqli->error . "\n");
+    }
+}
 
-//Iterate through rows and insert into database table
-foreach ($rows as $row) {
-    //Check if email is valid
-    if(!filter_var($row[2], FILTER_VALIDATE_EMAIL)){
-        echo "Email is not valid. Skipping the row.\n";
-        continue;
+// Read CSV file
+if (($handle = fopen($filename, "r")) !== FALSE) {
+    // Skip header row
+    fgetcsv($handle);
+
+    while (($data = fgetcsv($handle)) !== FALSE) {
+        // Capitalize name and surname
+        $name = ucwords(strtolower($data[0]));
+        $surname = ucwords(strtolower($data[1]));
+
+        // Lowercase email
+        $email = strtolower($data[2]);
+
+        // Validate email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo "Error: Invalid email address - $email\n";
+            continue;
+        }
+
+        // Insert record into database
+        $sql = "INSERT INTO users (name, surname, email) VALUES (?, ?, ?)";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('sss', $name, $surname, $email);
+
+        if (!$stmt->execute()) {
+            echo "Error inserting record - " . $mysqli->error . "\n";
+        }
     }
 
-    //Capitalize name and surname
-    $name = ucfirst(strtolower($row[0]));
-    $surname = ucfirst(strtolower($row[1]));
-    $email = strtolower($row[2]);
-
-    //Execute insert statement
-    try{
-        $insert->execute([$name,$surname,$email]);
-    }catch(PDOException $e){
-        echo "Error inserting row." .$e->getMessage() . "\n";
-    }
+    fclose($handle);
 }
 
 //Close database connection
-$conn = null;
+$mysqli->close();
 
 echo "Done.\n";
 
