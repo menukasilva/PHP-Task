@@ -1,5 +1,5 @@
 # PHP-Task
-Programming Evaluation for PHP - Catalyst IT Australia
+Programming Evaluation for PHP
 
 #1 - Script Task
     • Script Task created and tested on local MAMP server Version 5.7
