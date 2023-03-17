@@ -105,5 +105,3 @@ if (($handle = fopen($filename, "r")) !== FALSE) {
 $mysqli->close();
 
 echo "Done.\n";
-
-?>
